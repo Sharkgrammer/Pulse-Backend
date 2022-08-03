@@ -98,7 +98,7 @@ class Post(models.Model):
 
     # TODO handle images
     image_post = models.BooleanField(default=False)
-    image_contents = models.TextField(blank=True)
+    image_contents = models.ImageField(upload_to='posts', max_length=None, blank=True)
 
     # Spare Fields
     field1 = models.CharField(max_length=255, default="", blank=True)

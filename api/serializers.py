@@ -6,19 +6,19 @@ from api.models import Post, User
 
 class post_serializer(serializers.Serializer):
     id = serializers.PrimaryKeyRelatedField(read_only=True)
-    profile_name = serializers.CharField(source="created_by.get_name")
-    profile_username = serializers.CharField(source="created_by.username")
-    profile_image = serializers.ImageField(source="created_by.prof_image")
+    profile_name = serializers.CharField(source="created_by.get_name", read_only=True)
+    profile_username = serializers.CharField(source="created_by.username", read_only=True)
+    profile_image = serializers.ImageField(source="created_by.prof_image", read_only=True)
     content = serializers.CharField(default="")
     likes = serializers.IntegerField(default=0)
     comments = serializers.IntegerField(default=0)
     shares = serializers.IntegerField(default=0)
     status = serializers.IntegerField(default=0)
     image_post = serializers.BooleanField(default=False)
-    image_contents = serializers.CharField(default="")
-    created_date = serializers.DateTimeField(required=False, allow_null=True, default=None)
-    last_edit = serializers.DateTimeField(required=False, allow_null=True, default=None)
-    last_update = serializers.DateTimeField(required=False, allow_null=True, default=None)
+    image_contents = serializers.ImageField(default="")
+    created_date = serializers.DateTimeField(required=False, allow_null=True, default=get_today)
+    last_edit = serializers.DateTimeField(required=False, allow_null=True, default=get_today)
+    last_update = serializers.DateTimeField(required=False, allow_null=True, default=get_today)
 
     def create(self, validated_data):
         return Post.objects.create(**validated_data)
