@@ -29,22 +29,12 @@ class post(APIView):
         stream_data = io.BytesIO(JSON_datatype)
         data = JSONParser().parse(stream_data)
 
-        file_obj = len(request.POST)
-        print(file_obj)
-
         pid = request.GET.get("id", 0)
-        image = data["image_contents"]
-        print(image)
-
         if pid == 0:
             serializer_data = post_serializer(data=data)
 
             if serializer_data.is_valid():
-                image = None
-
-
-
-                serializer_data.save(created_by=user, image_contents=image)
+                serializer_data.save(created_by=user, image_contents=None)
 
                 response = "True"
             else:
@@ -59,5 +49,22 @@ class post(APIView):
                 response = "True"
             else:
                 print(serializer_data.errors)
+
+        return HttpResponse(response)
+
+    def put(self, request):
+        user = request.user
+        file_obj = request.FILES['file']
+        response = "False"
+
+        data = {'image_post': True, 'content': request.data['content']}
+
+        serializer_data = post_serializer(data=data)
+
+        if serializer_data.is_valid():
+            serializer_data.save(created_by=user, image_contents=file_obj)
+            response = "True"
+        else:
+            print(serializer_data.errors)
 
         return HttpResponse(response)
