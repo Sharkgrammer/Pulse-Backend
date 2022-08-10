@@ -16,10 +16,10 @@ class post(APIView):
 
     def get(self, request):
         # TODO algorithm this thing
-        posts = Post.objects.all().reverse()
+        posts = Post.objects.all()
         serializer = post_serializer(posts, many=True)
 
-        return Response(serializer.data)
+        return Response(serializer.data[::-1])
 
     def post(self, request):
         user = request.user
