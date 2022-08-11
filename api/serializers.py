@@ -38,3 +38,44 @@ class post_serializer(serializers.Serializer):
 
         instance.save()
         return instance
+
+
+class user_serializer(serializers.Serializer):
+    id = serializers.PrimaryKeyRelatedField(read_only=True)
+    first_name = serializers.CharField(default="")
+    last_name = serializers.CharField(default="")
+    email = serializers.EmailField(default="")
+    username = serializers.CharField(default="")
+    prof_image = serializers.ImageField(default="")
+    prof_desc = serializers.CharField(default="")
+    followers = serializers.IntegerField(default=0)
+    following = serializers.IntegerField(default=0)
+    date_joined = serializers.DateTimeField(required=False)
+    last_login = serializers.DateTimeField(required=False)
+
+    def get_fields(self):
+        fields = super().get_fields()
+        exclude_fields = self.context.get('exclude_fields', [])
+
+        for field in exclude_fields:
+            fields.pop(field, default=None)
+
+        return fields
+
+    def create(self, validated_data):
+        return User.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        instance.first_name = validated_data.get('first_name', instance.first_name)
+        instance.last_name = validated_data.get('last_name', instance.last_name)
+        instance.email = validated_data.get('email', instance.email)
+        instance.username = validated_data.get('username', instance.username)
+        instance.prof_image = validated_data.get('prof_image', instance.prof_image)
+        instance.prof_desc = validated_data.get('prof_desc', instance.prof_desc)
+        instance.followers = validated_data.get('followers', instance.followers)
+        instance.following = validated_data.get('following', instance.following)
+        instance.date_joined = validated_data.get('image_post', instance.date_joined)
+        instance.last_login = validated_data.get('image_contents', instance.last_login)
+
+        instance.save()
+        return instance

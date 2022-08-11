@@ -6,8 +6,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 # Create your views here.
-from api.models import Post
-from api.serializers import post_serializer
+from api.models import Post, User
+from api.serializers import post_serializer, user_serializer
 
 
 class post(APIView):
@@ -68,3 +68,53 @@ class post(APIView):
             print(serializer_data.errors)
 
         return HttpResponse(response)
+
+
+class user(APIView):
+    permission_classes = (IsAuthenticated,)
+    parser_classes = (MultiPartParser,)
+
+    def get(self, request):
+        user = request.user
+
+        uid = request.GET.get("username", None)
+        email = request.GET.get("email", None)
+
+        if uid is None and email is None:
+            return HttpResponse("False")
+
+        # TODO if i implement block/privacy features, they would go here and in the post algo
+        user_data = None
+
+        if email is None:
+            user_data = User.objects.get(username=uid)
+        else:
+            user_data = User.objects.get(email=email)
+
+        context = {}
+        if user.username != uid:
+            context = {
+                'exclude_fields': [
+                    'email',
+                    'id',
+                    'last_login'
+                ]
+            }
+
+        serializer = user_serializer(user_data, many=False, context=context)
+
+        return Response(serializer.data)
+
+    def post(self, request):
+        user = request.user
+        response = "False"
+
+        # TODO edit user
+
+        return HttpResponse(response)
+
+    def put(self, request):
+        user = request.user
+        # TODO create user
+
+        return HttpResponse("False")
