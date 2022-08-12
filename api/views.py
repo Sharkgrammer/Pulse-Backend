@@ -1,7 +1,9 @@
 import io
 from django.http import HttpResponse
+from rest_framework.decorators import action, api_view
 from rest_framework.parsers import JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -118,3 +120,24 @@ class user(APIView):
         # TODO create user
 
         return HttpResponse("False")
+
+
+@api_view(['GET'])
+@action(detail=True, permission_classes=[IsAuthenticated])
+def get_suggested_users(request):
+    user = request.user
+
+    # TODO yet another algo here, currently returns all users
+    all_users = User.objects.all()
+
+    context = {
+        'exclude_fields': [
+            'email',
+            'id',
+            'last_login'
+        ]
+    }
+
+    serializer = user_serializer(all_users, many=True, context=context)
+
+    return Response(serializer.data)
