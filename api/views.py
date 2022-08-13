@@ -128,7 +128,7 @@ def get_suggested_users(request):
     user = request.user
 
     # TODO yet another algo here, currently returns all users
-    all_users = User.objects.all()
+    all_users = User.objects.all().exclude(username=user.username)
 
     context = {
         'exclude_fields': [
