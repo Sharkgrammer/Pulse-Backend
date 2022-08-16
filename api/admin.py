@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
 from django import forms
 
-from .models import User, Post
+from .models import User, Post, Follow, Like
 
 
 # USER ADMIN
@@ -108,3 +108,36 @@ class PostAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Post, PostAdmin)
+
+
+class FollowAdmin(admin.ModelAdmin):
+    list_display = (
+        'id', 'created_by', 'following', 'created_date')
+    search_fields = ('id', 'created_by', 'following', 'created_date')
+    ordering = ('-id',)
+
+    fieldsets = (
+        ('Follows Data', {'fields': (
+            'created_by', 'following', 'created_date')}),
+        ('Spare Data', {'fields': ('field1', 'field2', 'field3', 'field4', 'field5')}),
+    )
+
+
+admin.site.register(Follow, FollowAdmin)
+
+
+class LikeAdmin(admin.ModelAdmin):
+    title="x"
+    list_display = (
+        'id', 'created_by', 'post', 'created_date')
+    search_fields = ('id', 'created_by', 'post', 'created_date')
+    ordering = ('-id',)
+
+    fieldsets = (
+        ('Likes Data', {'fields': (
+            'created_by', 'post', 'created_date')}),
+        ('Spare Data', {'fields': ('field1', 'field2', 'field3', 'field4', 'field5')}),
+    )
+
+
+admin.site.register(Like, LikeAdmin)

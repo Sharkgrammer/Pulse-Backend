@@ -1,25 +1,23 @@
 import io
 from django.http import HttpResponse
-from rest_framework.decorators import action, api_view
 from rest_framework.parsers import JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-# Create your views here.
-from api.models import Post, User
-from api.serializers import post_serializer, user_serializer
+from api.functions import update_follows
+from api.models import Post, User, Follow
+from api.serializers import PostSerializer, UserSerializer, FollowSerializer
 
 
-class post(APIView):
+class PostView(APIView):
     permission_classes = (IsAuthenticated,)
     parser_classes = (MultiPartParser,)
 
     def get(self, request):
         # TODO algorithm this thing
         posts = Post.objects.all()
-        serializer = post_serializer(posts, many=True)
+        serializer = PostSerializer(posts, many=True)
 
         return Response(serializer.data[::-1])
 
@@ -33,7 +31,7 @@ class post(APIView):
 
         pid = request.GET.get("id", 0)
         if pid == 0:
-            serializer_data = post_serializer(data=data)
+            serializer_data = PostSerializer(data=data)
 
             if serializer_data.is_valid():
                 serializer_data.save(created_by=user, image_contents=None)
@@ -44,7 +42,7 @@ class post(APIView):
         else:
 
             post = Post.objects.get(id=pid, created_by=user)
-            serializer_data = post_serializer(post, data=data, partial=True)
+            serializer_data = PostSerializer(post, data=data, partial=True)
 
             if serializer_data.is_valid():
                 serializer_data.save(org=user.org)
@@ -61,7 +59,7 @@ class post(APIView):
 
         data = {'image_post': True, 'content': request.data['content']}
 
-        serializer_data = post_serializer(data=data)
+        serializer_data = PostSerializer(data=data)
 
         if serializer_data.is_valid():
             serializer_data.save(created_by=user, image_contents=file_obj)
@@ -72,7 +70,7 @@ class post(APIView):
         return HttpResponse(response)
 
 
-class user(APIView):
+class UserView(APIView):
     permission_classes = (IsAuthenticated,)
     parser_classes = (MultiPartParser,)
 
@@ -103,7 +101,7 @@ class user(APIView):
                 ]
             }
 
-        serializer = user_serializer(user_data, many=False, context=context)
+        serializer = UserSerializer(user_data, many=False, context=context)
 
         return Response(serializer.data)
 
@@ -117,27 +115,62 @@ class user(APIView):
 
     def put(self, request):
         user = request.user
-        # TODO create user
+        # TODO create user (with image)
 
         return HttpResponse("False")
 
 
-@api_view(['GET'])
-@action(detail=True, permission_classes=[IsAuthenticated])
-def get_suggested_users(request):
-    user = request.user
+class FollowView(APIView):
+    permission_classes = (IsAuthenticated,)
 
-    # TODO yet another algo here, currently returns all users
-    all_users = User.objects.all().exclude(username=user.username)
+    def get(self, request):
+        # Get all follows or followers a user
 
-    context = {
-        'exclude_fields': [
-            'email',
-            'id',
-            'last_login'
-        ]
-    }
+        username = request.GET.get("u", None)
+        is_followers = request.GET.get("f", None)
 
-    serializer = user_serializer(all_users, many=True, context=context)
+        if username is not None and is_followers is not None:
+            follow_data = {}
 
-    return Response(serializer.data)
+            if is_followers:
+                follow_data = Follow.objects.all().filter(created_by__username=username)
+            else:
+                follow_data = Follow.objects.all().filter(following__username=username)
+
+            serializer = FollowSerializer(follow_data, many=True)
+
+            return Response(serializer.data)
+        else:
+            return HttpResponse("False")
+
+    def post(self, request):
+        user = request.user
+        response = "False"
+
+        username = request.POST.get("u", None)
+        add = request.POST.get("a", True)
+
+        if username is not None:
+            follow_user = User.objects.get(username=username)
+
+            data = {'created_by': user, 'following': follow_user}
+
+            serializer_data = FollowSerializer(data=data)
+
+            if serializer_data.is_valid():
+                serializer_data.save()
+                update_follows(user, follow_user, add)
+
+                response = "True"
+
+        return HttpResponse(response)
+
+
+class LikeView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        return HttpResponse("False")
+
+    def post(self, request):
+        return HttpResponse("False")

@@ -1,10 +1,10 @@
 from rest_framework import serializers
 
 from api.functions import get_today
-from api.models import Post, User
+from api.models import Post, User, Follow, Like
 
 
-class post_serializer(serializers.Serializer):
+class PostSerializer(serializers.Serializer):
     id = serializers.PrimaryKeyRelatedField(read_only=True)
     profile_name = serializers.CharField(source="created_by.get_name", read_only=True)
     profile_username = serializers.CharField(source="created_by.username", read_only=True)
@@ -40,7 +40,7 @@ class post_serializer(serializers.Serializer):
         return instance
 
 
-class user_serializer(serializers.Serializer):
+class UserSerializer(serializers.Serializer):
     id = serializers.PrimaryKeyRelatedField(read_only=True)
     first_name = serializers.CharField(default="")
     last_name = serializers.CharField(default="")
@@ -76,6 +76,40 @@ class user_serializer(serializers.Serializer):
         instance.following = validated_data.get('following', instance.following)
         instance.date_joined = validated_data.get('image_post', instance.date_joined)
         instance.last_login = validated_data.get('image_contents', instance.last_login)
+
+        instance.save()
+        return instance
+
+
+class FollowSerializer(serializers.Serializer):
+    id = serializers.PrimaryKeyRelatedField(read_only=True)
+    created_by_username = serializers.CharField(source="created_by.username", read_only=True)
+    following_username = serializers.CharField(source="following.username", read_only=True)
+    created_date = serializers.DateTimeField(required=False)
+
+    def create(self, validated_data):
+        return Follow.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        instance.created_by = validated_data.get('created_by', instance.created_by)
+        instance.following = validated_data.get('following', instance.following)
+
+        instance.save()
+        return instance
+
+
+class LikeSerializer(serializers.Serializer):
+    id = serializers.PrimaryKeyRelatedField(read_only=True)
+    created_by_username = serializers.CharField(source="created_by.username", read_only=True)
+    post_id = serializers.CharField(source="post.id", read_only=True)
+    created_date = serializers.DateTimeField(required=False)
+
+    def create(self, validated_data):
+        return Like.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        instance.created_by = validated_data.get('created_by', instance.created_by)
+        instance.post = validated_data.get('post', instance.post)
 
         instance.save()
         return instance

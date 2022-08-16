@@ -44,6 +44,7 @@ class SystemUserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
+    id = models.BigAutoField(primary_key=True)
     first_name = models.CharField('first name', max_length=30, blank=True)
     last_name = models.CharField('last name', max_length=150, blank=True)
     email = models.EmailField(verbose_name='Email', max_length=255, unique=True)
@@ -84,7 +85,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 # Models
 class Post(models.Model):
-    id = models.AutoField(primary_key=True)
+    id = models.BigAutoField(primary_key=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     created_date = models.DateTimeField(default=get_today)
     last_edit = models.DateTimeField(default=get_today)
@@ -96,7 +97,6 @@ class Post(models.Model):
     shares = models.IntegerField(default=0)
     status = models.IntegerField(default=0)
 
-    # TODO handle images
     image_post = models.BooleanField(default=False)
     image_contents = models.ImageField(upload_to='posts', max_length=None, blank=True)
 
@@ -113,3 +113,45 @@ class Post(models.Model):
 
     def __str__(self):
         return "Post {} by {}".format(self.id, self.created_by.username)
+
+
+class Follow(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_user")
+    following = models.ForeignKey(User, on_delete=models.CASCADE, related_name="following_user")
+    created_date = models.DateTimeField(default=get_today)
+
+    # Spare Fields
+    field1 = models.CharField(max_length=255, default="", blank=True)
+    field2 = models.CharField(max_length=255, default="", blank=True)
+    field3 = models.CharField(max_length=255, default="", blank=True)
+    field4 = models.CharField(max_length=255, default="", blank=True)
+    field5 = models.CharField(max_length=255, default="", blank=True)
+
+    def get_all_objects(self):
+        queryset = self._meta.model.objects.all()
+        return queryset
+
+    def __str__(self):
+        return "({}) {} followed by {}".format(self.id, self.following.username, self.created_by.username)
+
+
+class Like(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="liked_post")
+    created_date = models.DateTimeField(default=get_today)
+
+    # Spare Fields
+    field1 = models.CharField(max_length=255, default="", blank=True)
+    field2 = models.CharField(max_length=255, default="", blank=True)
+    field3 = models.CharField(max_length=255, default="", blank=True)
+    field4 = models.CharField(max_length=255, default="", blank=True)
+    field5 = models.CharField(max_length=255, default="", blank=True)
+
+    def get_all_objects(self):
+        queryset = self._meta.model.objects.all()
+        return queryset
+
+    def __str__(self):
+        return "({}) Post {} liked by {}".format(self.id, self.post.id, self.created_by.username)

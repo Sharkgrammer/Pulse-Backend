@@ -30,3 +30,15 @@ def generate_random_string(n):
         random_string += (chr(random_integer))
 
     return random_string
+
+
+def update_follows(user, following, add):
+    if add:
+        user.following += 1
+        following.followers += 1
+    else:
+        user.following -= 1
+        following.followers -= 1
+
+    user.save()
+    following.save()
