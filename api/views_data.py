@@ -122,6 +122,7 @@ class UserView(APIView):
 
 class FollowView(APIView):
     permission_classes = (IsAuthenticated,)
+    parser_classes = (MultiPartParser,)
 
     def get(self, request):
         # Get all follows or followers a user
@@ -144,24 +145,34 @@ class FollowView(APIView):
             return HttpResponse("False")
 
     def post(self, request):
+        print(request)
         user = request.user
         response = "False"
+        print(request)
 
-        username = request.POST.get("u", None)
-        add = request.POST.get("a", True)
+        JSON_datatype = request.body
+        stream_data = io.BytesIO(JSON_datatype)
+        JSON_data = JSONParser().parse(stream_data)
+
+        username = JSON_data["username"]
 
         if username is not None:
             follow_user = User.objects.get(username=username)
+            test_follow = Follow.objects.filter(created_by=user, following=follow_user)
 
-            data = {'created_by': user, 'following': follow_user}
-
-            serializer_data = FollowSerializer(data=data)
-
-            if serializer_data.is_valid():
-                serializer_data.save()
-                update_follows(user, follow_user, add)
-
+            if test_follow.exists():
+                test_follow.delete()
+                update_follows(user, follow_user, False)
                 response = "True"
+
+            else:
+                serializer_data = FollowSerializer(data={})
+
+                if serializer_data.is_valid():
+                    serializer_data.save(created_by=user, following=follow_user)
+                    update_follows(user, follow_user, True)
+
+                    response = "True"
 
         return HttpResponse(response)
 

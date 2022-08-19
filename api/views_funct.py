@@ -29,17 +29,3 @@ def get_suggested_users(request):
     serializer = UserSerializer(all_users, many=True, context=context)
 
     return Response(serializer.data)
-
-
-@api_view(['POST'])
-@action(detail=True, permission_classes=[IsAuthenticated])
-def follow_user(request):
-    user = request.user
-
-    return False
-
-
-@api_view(['POST'])
-@action(detail=True, permission_classes=[IsAuthenticated])
-def like_post(request):
-    return False
