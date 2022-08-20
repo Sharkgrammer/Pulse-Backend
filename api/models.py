@@ -99,6 +99,7 @@ class Post(models.Model):
 
     image_post = models.BooleanField(default=False)
     image_contents = models.ImageField(upload_to='posts', max_length=None, blank=True)
+    deleted = models.BooleanField(default=False)
 
     # Spare Fields
     field1 = models.CharField(max_length=255, default="", blank=True)
@@ -120,6 +121,8 @@ class Follow(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_user")
     following = models.ForeignKey(User, on_delete=models.CASCADE, related_name="following_user")
     created_date = models.DateTimeField(default=get_today)
+    last_update = models.DateTimeField(default=get_today)
+    deleted = models.BooleanField(default=False)
 
     # Spare Fields
     field1 = models.CharField(max_length=255, default="", blank=True)
@@ -141,6 +144,8 @@ class Like(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="liked_post")
     created_date = models.DateTimeField(default=get_today)
+    last_update = models.DateTimeField(default=get_today)
+    deleted = models.BooleanField(default=False)
 
     # Spare Fields
     field1 = models.CharField(max_length=255, default="", blank=True)

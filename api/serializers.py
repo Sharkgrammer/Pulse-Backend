@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.fields import SerializerMethodField
 
 from api.functions import get_today
 from api.models import Post, User, Follow, Like
@@ -6,9 +7,6 @@ from api.models import Post, User, Follow, Like
 
 class PostSerializer(serializers.Serializer):
     id = serializers.PrimaryKeyRelatedField(read_only=True)
-    profile_name = serializers.CharField(source="created_by.get_name", read_only=True)
-    profile_username = serializers.CharField(source="created_by.username", read_only=True)
-    profile_image = serializers.ImageField(source="created_by.prof_image", read_only=True)
     content = serializers.CharField(default="")
     likes = serializers.IntegerField(default=0)
     comments = serializers.IntegerField(default=0)
@@ -19,6 +17,13 @@ class PostSerializer(serializers.Serializer):
     created_date = serializers.DateTimeField(required=False, allow_null=True, default=get_today)
     last_edit = serializers.DateTimeField(required=False, allow_null=True, default=get_today)
     last_update = serializers.DateTimeField(required=False, allow_null=True, default=get_today)
+    profile_name = serializers.CharField(source="created_by.get_name", read_only=True)
+    profile_username = serializers.CharField(source="created_by.username", read_only=True)
+    profile_image = serializers.ImageField(source="created_by.prof_image", read_only=True)
+    liked = SerializerMethodField(method_name='get_liked', read_only=True)
+
+    def get_liked(self, post):
+        return Like.objects.filter(post__id=post.id, created_by=self.context.get("user"), deleted=False).exists()
 
     def create(self, validated_data):
         return Post.objects.create(**validated_data)

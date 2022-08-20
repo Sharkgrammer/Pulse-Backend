@@ -5,9 +5,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.functions import update_follows
-from api.models import Post, User, Follow
-from api.serializers import PostSerializer, UserSerializer, FollowSerializer
+from api.functions import update_follows, update_likes, get_today
+from api.models import Post, User, Follow, Like
+from api.serializers import PostSerializer, UserSerializer, FollowSerializer, LikeSerializer
 
 
 class PostView(APIView):
@@ -16,8 +16,13 @@ class PostView(APIView):
 
     def get(self, request):
         # TODO algorithm this thing
+        user = request.user
+        context = {
+            'user': user
+        }
+
         posts = Post.objects.all()
-        serializer = PostSerializer(posts, many=True)
+        serializer = PostSerializer(posts, many=True, context=context)
 
         return Response(serializer.data[::-1])
 
@@ -145,10 +150,8 @@ class FollowView(APIView):
             return HttpResponse("False")
 
     def post(self, request):
-        print(request)
         user = request.user
         response = "False"
-        print(request)
 
         JSON_datatype = request.body
         stream_data = io.BytesIO(JSON_datatype)
@@ -159,20 +162,27 @@ class FollowView(APIView):
         if username is not None:
             follow_user = User.objects.get(username=username)
             test_follow = Follow.objects.filter(created_by=user, following=follow_user)
+            add_follow = False
 
             if test_follow.exists():
-                test_follow.delete()
-                update_follows(user, follow_user, False)
-                response = "True"
+                follow = test_follow[0]
 
+                add_follow = follow.deleted
+                follow.deleted = not follow.deleted
+                follow.last_update = get_today()
+
+                follow.save()
+                response = "True"
             else:
                 serializer_data = FollowSerializer(data={})
 
                 if serializer_data.is_valid():
                     serializer_data.save(created_by=user, following=follow_user)
-                    update_follows(user, follow_user, True)
+                    add_follow = True
 
                     response = "True"
+
+            update_follows(user, follow_user, add_follow)
 
         return HttpResponse(response)
 
@@ -184,4 +194,38 @@ class LikeView(APIView):
         return HttpResponse("False")
 
     def post(self, request):
-        return HttpResponse("False")
+        user = request.user
+        response = "False"
+
+        JSON_datatype = request.body
+        stream_data = io.BytesIO(JSON_datatype)
+        JSON_data = JSONParser().parse(stream_data)
+
+        pid = JSON_data["id"]
+
+        if pid is not None:
+            post = Post.objects.get(id=pid)
+            test_like = Like.objects.filter(created_by=user, post=post)
+            add_like = False
+
+            if test_like.exists():
+                like = test_like[0]
+
+                add_like = like.deleted
+                like.deleted = not like.deleted
+                like.last_update = get_today()
+
+                like.save()
+                response = "True"
+            else:
+                serializer_data = LikeSerializer(data={})
+
+                if serializer_data.is_valid():
+                    serializer_data.save(created_by=user, post=post)
+                    add_like = True
+
+                    response = "True"
+
+            update_likes(post, add_like)
+
+        return HttpResponse(response)

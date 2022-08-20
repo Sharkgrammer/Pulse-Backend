@@ -11,7 +11,7 @@ def get_suggested_users(request):
     user = request.user
 
     # TODO yet another algo here. Make better
-    follows = Follow.objects.all().filter(created_by=user)
+    follows = Follow.objects.all().filter(created_by=user, deleted=False)
 
     usernames = [x.following.username for x in follows]
     usernames.append(user.username)

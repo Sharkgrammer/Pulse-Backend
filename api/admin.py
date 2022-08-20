@@ -94,15 +94,15 @@ admin.site.register(User, UserAdmin)
 class PostAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'created_by', 'content', 'likes', 'comments', 'shares', 'image_post', 'status', 'created_date',
-        'last_edit', 'last_update')
+        'last_edit', 'last_update', 'deleted')
     search_fields = ('id', 'created_by', 'content', 'template_id')
     ordering = ('-id',)
-    list_filter = ('image_post', 'status')
+    list_filter = ('image_post', 'status', 'deleted')
 
     fieldsets = (
         ('Post Data', {'fields': (
             'created_by', 'created_date', 'last_edit', 'last_update', 'content', 'likes', 'comments', 'shares',
-            'status', 'image_post', 'image_contents')}),
+            'status', 'image_post', 'image_contents', 'deleted')}),
         ('Spare Data', {'fields': ('field1', 'field2', 'field3', 'field4', 'field5')}),
     )
 
@@ -112,13 +112,14 @@ admin.site.register(Post, PostAdmin)
 
 class FollowAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'created_by', 'following', 'created_date')
+        'id', 'created_by', 'following', 'created_date', 'last_update', 'deleted')
     search_fields = ('id', 'created_by', 'following', 'created_date')
+    list_filter = ("deleted",)
     ordering = ('-id',)
 
     fieldsets = (
         ('Follows Data', {'fields': (
-            'created_by', 'following', 'created_date')}),
+            'created_by', 'following', 'created_date', 'last_update', 'deleted')}),
         ('Spare Data', {'fields': ('field1', 'field2', 'field3', 'field4', 'field5')}),
     )
 
@@ -127,15 +128,15 @@ admin.site.register(Follow, FollowAdmin)
 
 
 class LikeAdmin(admin.ModelAdmin):
-    title="x"
     list_display = (
-        'id', 'created_by', 'post', 'created_date')
+        'id', 'created_by', 'post', 'created_date', 'last_update', 'deleted')
     search_fields = ('id', 'created_by', 'post', 'created_date')
+    list_filter = ("deleted",)
     ordering = ('-id',)
 
     fieldsets = (
         ('Likes Data', {'fields': (
-            'created_by', 'post', 'created_date')}),
+            'created_by', 'post', 'created_date', 'last_update', 'deleted')}),
         ('Spare Data', {'fields': ('field1', 'field2', 'field3', 'field4', 'field5')}),
     )
 

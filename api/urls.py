@@ -1,6 +1,5 @@
 from django.urls import path
-from api import views_data as data
-from api import views_funct as funct
+from api.views import views_data as data, views_funct as funct
 
 app_name = "api"
 urlpatterns = [

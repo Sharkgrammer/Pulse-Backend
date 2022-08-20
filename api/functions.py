@@ -42,3 +42,12 @@ def update_follows(user, following, add):
 
     user.save()
     following.save()
+
+
+def update_likes(post, add):
+    if add:
+        post.likes += 1
+    else:
+        post.likes -= 1
+
+    post.save()
