@@ -1,7 +1,7 @@
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager, PermissionsMixin)
 from django.db import models
-from api.functions import get_today
+from api.functions.functions import get_today, generate_random_string
 
 
 # System Models
@@ -50,7 +50,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(verbose_name='Email', max_length=255, unique=True)
     username = models.CharField(verbose_name='Username', max_length=150, unique=True)
 
-    # Profile data - TODO images?
+    # Profile data
     prof_image = models.ImageField(verbose_name='Profile Image', upload_to='profs', max_length=None, blank=True)
     prof_desc = models.TextField(verbose_name='Profile Desc', blank=True)
     followers = models.IntegerField(verbose_name='Followers', blank=True, default=0)
@@ -86,6 +86,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 # Models
 class Post(models.Model):
     id = models.BigAutoField(primary_key=True)
+    pid = models.CharField(max_length=10, unique=True, default=generate_random_string)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     created_date = models.DateTimeField(default=get_today)
     last_edit = models.DateTimeField(default=get_today)
@@ -99,6 +100,7 @@ class Post(models.Model):
 
     image_post = models.BooleanField(default=False)
     image_contents = models.ImageField(upload_to='posts', max_length=None, blank=True)
+    deleted = models.BooleanField(default=False)
 
     # Spare Fields
     field1 = models.CharField(max_length=255, default="", blank=True)
@@ -112,7 +114,7 @@ class Post(models.Model):
         return queryset
 
     def __str__(self):
-        return "Post {} by {}".format(self.id, self.created_by.username)
+        return "Post {}({}) by {}".format(self.pid, self.id, self.created_by.username)
 
 
 class Follow(models.Model):
@@ -120,6 +122,8 @@ class Follow(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_user")
     following = models.ForeignKey(User, on_delete=models.CASCADE, related_name="following_user")
     created_date = models.DateTimeField(default=get_today)
+    last_update = models.DateTimeField(default=get_today)
+    deleted = models.BooleanField(default=False)
 
     # Spare Fields
     field1 = models.CharField(max_length=255, default="", blank=True)
@@ -136,11 +140,15 @@ class Follow(models.Model):
         return "({}) {} followed by {}".format(self.id, self.following.username, self.created_by.username)
 
 
-class Like(models.Model):
+class Comment(models.Model):
     id = models.BigAutoField(primary_key=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="liked_post")
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="commented_post")
+    content = models.TextField(default="")
+    likes = models.IntegerField(default=0)
     created_date = models.DateTimeField(default=get_today)
+    last_update = models.DateTimeField(default=get_today)
+    deleted = models.BooleanField(default=False)
 
     # Spare Fields
     field1 = models.CharField(max_length=255, default="", blank=True)
@@ -154,4 +162,71 @@ class Like(models.Model):
         return queryset
 
     def __str__(self):
-        return "({}) Post {} liked by {}".format(self.id, self.post.id, self.created_by.username)
+        return "({}) Post {} commented on by {}".format(self.id, self.post.pid, self.created_by.username)
+
+
+class Like(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="liked_post", blank=True, null=True)
+    is_post = models.BooleanField(default=True)
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name="liked_comment", blank=True, null=True)
+    created_date = models.DateTimeField(default=get_today)
+    last_update = models.DateTimeField(default=get_today)
+    deleted = models.BooleanField(default=False)
+
+    # Spare Fields
+    field1 = models.CharField(max_length=255, default="", blank=True)
+    field2 = models.CharField(max_length=255, default="", blank=True)
+    field3 = models.CharField(max_length=255, default="", blank=True)
+    field4 = models.CharField(max_length=255, default="", blank=True)
+    field5 = models.CharField(max_length=255, default="", blank=True)
+
+    def get_all_objects(self):
+        queryset = self._meta.model.objects.all()
+        return queryset
+
+    def __str__(self):
+        return "({}) liked by {}".format(self.id, self.created_by.username)
+
+
+class Interest(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=10)
+    count = models.IntegerField(default=0)
+    deleted = models.BooleanField(default=False)
+
+    # Spare Fields
+    field1 = models.CharField(max_length=255, default="", blank=True)
+    field2 = models.CharField(max_length=255, default="", blank=True)
+    field3 = models.CharField(max_length=255, default="", blank=True)
+    field4 = models.CharField(max_length=255, default="", blank=True)
+    field5 = models.CharField(max_length=255, default="", blank=True)
+
+    def get_all_objects(self):
+        queryset = self._meta.model.objects.all()
+        return queryset
+
+    def __str__(self):
+        return "{} ({})".format(self.name, self.id)
+
+
+class Interest_User(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    interest = models.ForeignKey(Interest, on_delete=models.CASCADE)
+    deleted = models.BooleanField(default=False)
+
+    # Spare Fields
+    field1 = models.CharField(max_length=255, default="", blank=True)
+    field2 = models.CharField(max_length=255, default="", blank=True)
+    field3 = models.CharField(max_length=255, default="", blank=True)
+    field4 = models.CharField(max_length=255, default="", blank=True)
+    field5 = models.CharField(max_length=255, default="", blank=True)
+
+    def get_all_objects(self):
+        queryset = self._meta.model.objects.all()
+        return queryset
+
+    def __str__(self):
+        return "{} likes {}({})".format(self.user.username, self.interest.name, self.interest.id)
