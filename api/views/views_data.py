@@ -135,7 +135,8 @@ class UserView(APIView):
                     'email',
                     'id',
                     'last_login'
-                ]
+                ],
+                'user': user
             }
 
         serializer = UserSerializer(user_data, many=False, context=context)

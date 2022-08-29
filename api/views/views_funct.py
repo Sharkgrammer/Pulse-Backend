@@ -1,6 +1,8 @@
 import io
+from itertools import chain
 
 from django.contrib.auth.hashers import make_password
+from django.db.models import Q
 from django.http import HttpResponse
 from rest_framework.decorators import action, api_view
 from rest_framework.parsers import JSONParser, MultiPartParser
@@ -9,7 +11,7 @@ from rest_framework.response import Response
 
 from api.functions.functions import wait_random_amount
 from api.models import User, Follow, Post, Interest, Interest_User
-from api.serializers import UserSerializer, InterestSerializer
+from api.serializers import UserSerializer, InterestSerializer, PostSerializer
 
 
 @api_view(['GET'])
@@ -155,7 +157,6 @@ def create_user(request):
     wait_random_amount()
 
     password = make_password(request.data["password"])
-    print(password)
 
     data = {'first_name': request.data['first_name'], 'last_name': request.data['last_name'],
             'email': request.data['email'], 'username': '@' + request.data['username'],
@@ -180,3 +181,36 @@ def get_all_interests(request):
     serializer = InterestSerializer(interests, many=True)
 
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+@action(detail=False)
+def search(request):
+    # Search through users and posts
+    user = request.user
+    context = {
+        'user': user,
+        'exclude_fields': [
+            'email',
+            'id',
+            'last_login'
+        ]
+    }
+
+    query = request.GET.get("query", "")
+    user_amt = int(request.GET.get('uamt', 3))
+    post_amt = int(request.GET.get('pamt', 3))
+
+    users = User.objects.all().filter(
+        Q(first_name__contains=query) | Q(last_name__contains=query) | Q(username__contains=query),
+        is_active=True).order_by('-id').exclude(username=user.username)[:user_amt:1]
+
+    posts = Post.objects.all().filter(Q(content__contains=query), deleted=False).order_by('-id')[:post_amt:1]
+
+    # TODO i don't know how bad this will be speed wise
+    user_serial = UserSerializer(users, many=True, context=context)
+    post_serial = PostSerializer(posts, many=True, context=context)
+
+    data = chain(user_serial.data, post_serial.data)
+
+    return Response(data)

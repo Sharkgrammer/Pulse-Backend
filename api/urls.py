@@ -20,5 +20,5 @@ urlpatterns = [
     path('email_free', funct.email_free, name='email_free'),
     path('create_user', funct.create_user, name='create_user'),
     path('get_all_interests', funct.get_all_interests, name='get_all_interests'),
-
+    path('search', funct.search, name='search'),
 ]
