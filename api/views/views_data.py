@@ -152,7 +152,10 @@ class FollowView(APIView):
         # Get all follows or followers for a user
         user = request.user
 
-        username = user.username
+        username = request.GET.get("username", None)
+        if username is None:
+            username = user.username
+
         get_followers = request.GET.get("followers", None) == "true"
 
         if get_followers is not None:
