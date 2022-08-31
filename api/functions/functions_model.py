@@ -1,5 +1,5 @@
-from api.functions.functions import generate_random_string
-from api.models import Post
+from api.functions.functions import generate_random_string, get_days_ago
+from api.models import Follow, Post, Interest_User
 
 
 def generate_pid():
@@ -10,3 +10,31 @@ def generate_pid():
         pid = generate_pid()
 
     return pid
+
+
+def get_user_score(main_user, other_user):
+    # Get how many followers are in common
+    other_follows = Follow.objects.values("following__username").filter(created_by=other_user, deleted=False)
+
+    similar_follows = Follow.objects.filter(following__username__in=other_follows, created_by=main_user,
+                                            deleted=False).count()
+
+    # Get how many interests are in common
+    other_interests = Interest_User.objects.values("interest__name").filter(user=other_user, deleted=False)
+
+    similar_interests = Interest_User.objects.filter(interest__name__in=other_interests, user=main_user,
+                                                     deleted=False).count()
+
+    # Check if the user has posted recently.
+    posted = Post.objects.filter(created_by=other_user, deleted=False, created_date__gte=get_days_ago(3)).exists()
+
+    score = similar_follows + similar_interests
+    if posted:
+        score *= 2
+        score += 1
+
+    # Check if the user logged in in the past day
+    if other_user.last_login >= get_days_ago(1):
+        score += 1
+
+    return score

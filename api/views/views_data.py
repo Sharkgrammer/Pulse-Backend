@@ -20,28 +20,30 @@ class PostView(APIView):
     def get(self, request):
         pid = request.GET.get("pid", None)
         user = request.user
+        data = []
         context = {
             'user': user
         }
 
         if pid is None:
             # Get all posts
-            # TODO algorithm this thing
 
             amt = int(request.GET.get('amt', 7))
-
             # TODO remove this, it just makes the UX feel more hefty when ran locally
             if amt > 7:
                 wait_random_amount()
 
-            posts = Post.objects.all().order_by('-id')[:amt:1]
+            posts = Post.objects.all().order_by('-id')
             serializer = PostSerializer(posts, many=True, context=context)
+            sorted_data = sorted(serializer.data, key=lambda u: u['score'], reverse=True)
 
+            data = sorted_data[:amt:1]
         else:
             post = Post.objects.get(pid=pid)
             serializer = PostSerializer(post, many=False, context=context)
+            data = serializer.data
 
-        return Response(serializer.data)
+        return Response(data)
 
     def post(self, request):
         user = request.user

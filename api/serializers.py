@@ -3,7 +3,8 @@ import random
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 
-from api.functions.functions import get_today, get_days_ago
+from api.functions.functions import get_today, get_days_ago, get_mins_ago
+from api.functions.functions_model import get_user_score
 from api.models import Post, User, Follow, Like, Comment, Interest, Interest_User
 
 
@@ -23,6 +24,7 @@ class PostSerializer(serializers.Serializer):
     profile_username = serializers.CharField(source="created_by.username", read_only=True)
     profile_image = serializers.ImageField(source="created_by.prof_image", read_only=True)
     liked = SerializerMethodField(method_name='get_liked', read_only=True)
+    score = SerializerMethodField(method_name='get_score', read_only=True)
 
     def validate_image_contents(self, image):
         # TODO validate image here
@@ -30,6 +32,73 @@ class PostSerializer(serializers.Serializer):
 
     def get_liked(self, post):
         return Like.objects.filter(post__id=post.id, created_by=self.context.get("user"), deleted=False).exists()
+
+    def get_score(self, post):
+        user = self.context.get("user")
+
+        # If the post is over 10 days old, we don't care about its order
+        if post.created_date <= get_days_ago(10):
+            return 0
+
+        # Check user score
+        user_score = 0
+        if post.created_by != user:
+            user_score = get_user_score(user, post.created_by)
+
+            if user_score == 0:
+                return 0
+
+        score = 0
+        multiplier = 0.1
+        # See if the users follows made posts
+        user_follows = Follow.objects.values_list("following__username", flat=True).filter(created_by=user,
+                                                                                           deleted=False)
+        if post.created_by.username in user_follows:
+            score += 3
+            multiplier = 0.3
+
+        if post.created_by.username in user.username:
+            score += 1
+            multiplier = 0.5
+
+            if post.created_date >= get_mins_ago(5):
+                # Let the users new post show at the top for a small bit
+                score += 100
+
+        # See if the post is recent
+        # Adds up to 10 to the score, 10 = today, 4 = 6 days ago
+        timedelta = get_today() - post.created_date
+        score += (10 - timedelta.days) * (0.75 + multiplier)
+
+        if post.created_date >= get_mins_ago(60):
+            score += 1
+        elif post.created_date >= get_mins_ago(120):
+            score += 0.5
+
+        # Check the posts likes
+        score += post.likes * multiplier
+
+        # Check the posts shares?
+        score += post.shares * multiplier
+
+        if self.get_liked(post):
+            score += 1
+
+        # Does the post have comments?
+        post_comments = Comment.objects.filter(post=post, deleted=False).count()
+        score += post_comments * multiplier
+
+        if Comment.objects.filter(post=post, created_by=user, deleted=False).exists():
+            score += 1
+
+        # Is it an image post?
+        if post.image_post:
+            score += 1
+
+        # Add user_score to score
+        score += user_score * multiplier
+
+        return round(score, 2)
 
     def create(self, validated_data):
         return Post.objects.create(**validated_data)
@@ -115,27 +184,7 @@ class SuggestedUserSerializer(serializers.Serializer):
     def get_score(self, other_user):
         main_user = self.context.get("user")
 
-        # Get how many followers are in common
-        other_follows = Follow.objects.values("following__username").filter(created_by=other_user, deleted=False)
-
-        similar_follows = Follow.objects.filter(following__username__in=other_follows, created_by=main_user,
-                                                deleted=False).count()
-
-        # Get how many interests are in common
-        other_interests = Interest_User.objects.values("interest__name").filter(user=other_user, deleted=False)
-
-        similar_interests = Interest_User.objects.filter(interest__name__in=other_interests, user=main_user,
-                                                         deleted=False).count()
-
-        # Check if the user has posted recently.
-        posted = Post.objects.filter(created_by=other_user, deleted=False, created_date__gte=get_days_ago(5)).exists()
-
-        score = similar_follows + similar_interests
-        if posted:
-            score *= 2
-            score += 2
-
-        return score + random.randint(0, 3)
+        return get_user_score(main_user, other_user) + random.randint(0, 3)
 
     def create(self, data):
         pass

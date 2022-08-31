@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from api.functions.functions import wait_random_amount
-from api.models import User, Follow, Post, Interest, Interest_User
+from api.models import Follow, User, Post, Interest, Interest_User
 from api.serializers import UserSerializer, InterestSerializer, PostSerializer, SuggestedUserSerializer
 
 
