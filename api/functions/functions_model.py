@@ -1,5 +1,5 @@
 from api.functions.functions import generate_random_string, get_days_ago
-from api.models import Follow, Post, Interest_User
+from api.models import Follow, Post, Interest_User, Comment, Like
 
 
 def generate_pid():
@@ -36,5 +36,11 @@ def get_user_score(main_user, other_user):
     # Check if the user logged in in the past day
     if other_user.last_login >= get_days_ago(1):
         score += 1
+
+    # Check if main has interacted with the user via likes or comments
+    score += Comment.objects.filter(created_by=main_user, post__created_by=other_user,
+                                    created_date__gte=get_days_ago(3), deleted=False).count()
+    score += Like.objects.filter(created_by=main_user, post__created_by=other_user, created_date__gte=get_days_ago(3),
+                                 deleted=False).count()
 
     return score
