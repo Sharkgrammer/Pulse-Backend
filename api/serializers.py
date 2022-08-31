@@ -1,7 +1,9 @@
+import random
+
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 
-from api.functions.functions import get_today
+from api.functions.functions import get_today, get_days_ago
 from api.models import Post, User, Follow, Like, Comment, Interest, Interest_User
 
 
@@ -61,15 +63,19 @@ class UserSerializer(serializers.Serializer):
     following = serializers.IntegerField(default=0)
     date_joined = serializers.DateTimeField(required=False)
     last_login = serializers.DateTimeField(required=False)
-    following_user = SerializerMethodField(method_name='is_following_me', read_only=True)
+    following_user = SerializerMethodField(method_name='is_following_user', read_only=True)
+    interests = SerializerMethodField(method_name='get_interests', read_only=True)
 
-    def is_following_me(self, user):
+    def is_following_user(self, user):
         main_user = self.context.get("user")
 
         if user == main_user or main_user is None:
             return False
 
         return Follow.objects.filter(created_by=main_user, following=user, deleted=False).exists()
+
+    def get_interests(self, user):
+        return Interest_User.objects.values_list("interest__name", flat=True).filter(user=user, deleted=False)
 
     def get_fields(self):
         fields = super().get_fields()
@@ -97,6 +103,45 @@ class UserSerializer(serializers.Serializer):
 
         instance.save()
         return instance
+
+
+class SuggestedUserSerializer(serializers.Serializer):
+    first_name = serializers.CharField(default="")
+    last_name = serializers.CharField(default="")
+    username = serializers.CharField(default="")
+    prof_image = serializers.ImageField(default="")
+    score = SerializerMethodField(method_name='get_score', read_only=True)
+
+    def get_score(self, other_user):
+        main_user = self.context.get("user")
+
+        # Get how many followers are in common
+        other_follows = Follow.objects.values("following__username").filter(created_by=other_user, deleted=False)
+
+        similar_follows = Follow.objects.filter(following__username__in=other_follows, created_by=main_user,
+                                                deleted=False).count()
+
+        # Get how many interests are in common
+        other_interests = Interest_User.objects.values("interest__name").filter(user=other_user, deleted=False)
+
+        similar_interests = Interest_User.objects.filter(interest__name__in=other_interests, user=main_user,
+                                                         deleted=False).count()
+
+        # Check if the user has posted recently.
+        posted = Post.objects.filter(created_by=other_user, deleted=False, created_date__gte=get_days_ago(5)).exists()
+
+        score = similar_follows + similar_interests
+        if posted:
+            score *= 2
+            score += 2
+
+        return score + random.randint(0, 3)
+
+    def create(self, data):
+        pass
+
+    def update(self, instance, data):
+        pass
 
 
 class FollowSerializer(serializers.Serializer):

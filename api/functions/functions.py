@@ -1,4 +1,5 @@
 import string
+from datetime import timedelta
 
 from django.utils import timezone
 from dateutil import parser
@@ -22,6 +23,12 @@ def convert_datetime_to_web_date(time, time_format="%A, %H:%M:%S, %d %b %Y"):
 
 def get_today():
     return timezone.now()
+
+
+def get_days_ago(days):
+    today = get_today()
+
+    return today - timedelta(days=days)
 
 
 def generate_random_string(n=10):

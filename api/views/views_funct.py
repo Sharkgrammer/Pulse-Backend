@@ -11,7 +11,7 @@ from rest_framework.response import Response
 
 from api.functions.functions import wait_random_amount
 from api.models import User, Follow, Post, Interest, Interest_User
-from api.serializers import UserSerializer, InterestSerializer, PostSerializer
+from api.serializers import UserSerializer, InterestSerializer, PostSerializer, SuggestedUserSerializer
 
 
 @api_view(['GET'])
@@ -19,25 +19,18 @@ from api.serializers import UserSerializer, InterestSerializer, PostSerializer
 def get_suggested_users(request):
     user = request.user
 
-    # TODO yet another algo here. Make better
+    # Get all users that you don't follow. Exclude yourself
     usernames = Follow.objects.values("following__username").filter(created_by=user, deleted=False)
-
-    # I really like this code but django models should do it better..
-    # usernames = [x.following.username for x in follows]
-
     all_users = User.objects.all().exclude(username__in=usernames).exclude(username=user.username)
 
-    context = {
-        'exclude_fields': [
-            'email',
-            'id',
-            'last_login'
-        ]
-    }
+    # Run the suggested user serializer. Calculates a score based on mutual follows/interests
+    serializer = SuggestedUserSerializer(all_users, many=True, context={'user': user})
 
-    serializer = UserSerializer(all_users, many=True, context=context)
+    # Sort data in reverse based on the score. Highest is best
+    sorted_data = sorted(serializer.data, key=lambda u: u['score'], reverse=True)
 
-    return Response(serializer.data)
+    # return the 6 best scores
+    return Response(sorted_data[:6:1])
 
 
 @api_view(['GET'])
