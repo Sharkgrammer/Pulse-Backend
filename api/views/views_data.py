@@ -115,6 +115,9 @@ class UserView(APIView):
             user.save()
 
         uid = request.GET.get("username", None)
+        if uid is None:
+            uid = user.username
+
         email = request.GET.get("email", None)
 
         if uid is None and email is None:
@@ -143,6 +146,69 @@ class UserView(APIView):
 
         return Response(serializer.data)
 
+    def post(self, request):
+        user = request.user
+        response = "False"
+
+        JSON_datatype = request.body
+        stream_data = io.BytesIO(JSON_datatype)
+        data = JSONParser().parse(stream_data)
+
+        username = ""
+        if "username" in data:
+            username = "@" + data["username"]
+
+        serializer_data = UserSerializer(user, data=data, partial=True)
+        if serializer_data.is_valid():
+
+            if username != "":
+                serializer_data.save(username=username)
+            else:
+                serializer_data.save()
+
+            response = "True"
+        else:
+            print(serializer_data.errors)
+
+        return HttpResponse(response)
+
+    def put(self, request):
+        user = request.user
+        file_obj = request.FILES['file']
+        response = "False"
+
+        first_name = request.data.get("first_name", None)
+        last_name = request.data.get("last_name", None)
+        email = request.data.get("email", None)
+        username = request.data.get("username", None)
+        prof_desc = request.data.get("prof_desc", None)
+
+        data = {'prof_image': file_obj}
+
+        if first_name is not None:
+            data['first_name'] = first_name
+
+        if last_name is not None:
+            data['last_name'] = last_name
+
+        if email is not None:
+            data['email'] = email
+
+        if email is not None:
+            data['username'] = '@' + username
+
+        if email is not None:
+            data['prof_desc'] = prof_desc
+
+        serializer_data = UserSerializer(user, data=data, partial=True)
+        if serializer_data.is_valid():
+            serializer_data.save()
+            response = "True"
+        else:
+            print(serializer_data.errors)
+
+        return HttpResponse(response)
+
 
 class FollowView(APIView):
     permission_classes = (IsAuthenticated,)
@@ -167,7 +233,7 @@ class FollowView(APIView):
             else:
                 data = data.filter(created_by__username=username, deleted=False).values("following__username")
 
-            all_users = User.objects.filter(username__in=data).exclude(username=user.username)
+            all_users = User.objects.filter(username__in=data)
 
             context = {
                 'exclude_fields': [
