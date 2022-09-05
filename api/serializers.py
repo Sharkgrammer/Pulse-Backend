@@ -9,6 +9,7 @@ from api.models import Post, User, Follow, Like, Comment, Interest, Interest_Use
 
 
 class PostSerializer(serializers.Serializer):
+    id = serializers.PrimaryKeyRelatedField(read_only=True)
     pid = serializers.CharField(read_only=True)
     content = serializers.CharField(default="")
     likes = serializers.IntegerField(default=0)
@@ -35,6 +36,11 @@ class PostSerializer(serializers.Serializer):
 
     def get_score(self, post):
         user = self.context.get("user")
+        run = self.context.get("score", False)
+
+        # No point running this on single posts or other things
+        if not run:
+            return 0
 
         # If the post is over 10 days old, we don't care about its order
         if post.created_date <= get_days_ago(10):
