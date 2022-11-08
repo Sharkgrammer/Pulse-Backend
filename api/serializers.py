@@ -24,6 +24,7 @@ class PostSerializer(serializers.Serializer):
     profile_name = serializers.CharField(source="created_by.get_name", read_only=True)
     profile_username = serializers.CharField(source="created_by.username", read_only=True)
     profile_image = serializers.ImageField(source="created_by.prof_image", read_only=True)
+    profile_verified = serializers.BooleanField(source="created_by.verified", read_only=True)
     liked = SerializerMethodField(method_name='get_liked', read_only=True)
     score = SerializerMethodField(method_name='get_score', read_only=True)
 
@@ -42,10 +43,6 @@ class PostSerializer(serializers.Serializer):
         if not run:
             return 0
 
-        # If the post is over 10 days old, we don't care about its order
-        if post.created_date <= get_days_ago(10):
-            return 0
-
         # Check user score
         user_score = 0
         if post.created_by != user:
@@ -53,6 +50,10 @@ class PostSerializer(serializers.Serializer):
 
             if user_score == 0:
                 return 0
+
+        # If the post is over 10 days old, we don't really care about its order, order based on user slightly
+        if post.created_date <= get_days_ago(10):
+            return user_score * 0.1
 
         score = 0
         multiplier = 0.1
@@ -130,10 +131,12 @@ class UserSerializer(serializers.Serializer):
     id = serializers.PrimaryKeyRelatedField(read_only=True)
     first_name = serializers.CharField(default="")
     last_name = serializers.CharField(default="")
+    name = serializers.CharField(source="get_name", read_only=True)
     email = serializers.EmailField(default="")
     username = serializers.CharField(default="")
     prof_image = serializers.ImageField(default="")
     prof_desc = serializers.CharField(default="")
+    verified = serializers.BooleanField(default=False)
     followers = serializers.IntegerField(default=0)
     following = serializers.IntegerField(default=0)
     date_joined = serializers.DateTimeField(required=False)
@@ -183,6 +186,8 @@ class UserSerializer(serializers.Serializer):
 class SuggestedUserSerializer(serializers.Serializer):
     first_name = serializers.CharField(default="")
     last_name = serializers.CharField(default="")
+    name = serializers.CharField(source="get_name", read_only=True)
+    verified = serializers.BooleanField(default=False)
     username = serializers.CharField(default="")
     prof_image = serializers.ImageField(default="")
     score = SerializerMethodField(method_name='get_score', read_only=True)
@@ -224,6 +229,7 @@ class CommentSerializer(serializers.Serializer):
     profile_name = serializers.CharField(source="created_by.get_name", read_only=True)
     profile_username = serializers.CharField(source="created_by.username", read_only=True)
     profile_image = serializers.ImageField(source="created_by.prof_image", read_only=True)
+    profile_verified = serializers.BooleanField(source="created_by.verified", read_only=True)
     created_date = serializers.DateTimeField(required=False)
     liked = SerializerMethodField(method_name='get_liked', read_only=True)
 

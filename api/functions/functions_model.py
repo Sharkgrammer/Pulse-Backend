@@ -43,4 +43,13 @@ def get_user_score(main_user, other_user):
     score += Like.objects.filter(created_by=main_user, post__created_by=other_user, created_date__gte=get_days_ago(3),
                                  deleted=False).count()
 
+    # These two scores are based on current twitter drama thanks to musk.
+    # Check if the user is verified
+    if other_user.verified:
+        score += 1
+
+    # Check if the user is the big cheese
+    if other_user.username == "@admin":
+        score += 10
+
     return score

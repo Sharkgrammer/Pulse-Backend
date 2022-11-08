@@ -49,6 +49,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField('last name', max_length=150, blank=True)
     email = models.EmailField(verbose_name='Email', max_length=255, unique=True)
     username = models.CharField(verbose_name='Username', max_length=150, unique=True)
+    verified = models.BooleanField(verbose_name="Verified", default=False)
 
     # Profile data
     prof_image = models.ImageField(verbose_name='Profile Image', upload_to='profs', max_length=None, blank=True)

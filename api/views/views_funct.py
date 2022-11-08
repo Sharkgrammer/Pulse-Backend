@@ -201,9 +201,11 @@ def search(request):
     posts = Post.objects.all().filter(Q(content__contains=query), deleted=False).order_by('-id')[:post_amt:1]
 
     # TODO i don't know how bad this will be speed wise
-    user_serial = UserSerializer(users, many=True, context=context)
+    user_serial = SuggestedUserSerializer(users, many=True, context=context)
+    user_data = sorted(user_serial.data, key=lambda u: u['score'], reverse=True)
+
     post_serial = PostSerializer(posts, many=True, context=context)
 
-    data = chain(user_serial.data, post_serial.data)
+    data = chain(user_data, post_serial.data)
 
     return Response(data)

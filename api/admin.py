@@ -50,7 +50,7 @@ class UpdateUserForm(forms.ModelForm):
         model = User
         fields = (
             'email', 'password', 'username', 'first_name', 'last_name', 'prof_image', 'prof_desc', 'followers',
-            'following', 'is_active', 'is_staff', 'date_joined', 'last_login'
+            'following', 'is_active', 'is_staff', 'verified', 'date_joined', 'last_login'
         )
 
     def clean_password(self):
@@ -64,12 +64,12 @@ class UserAdmin(BaseUserAdmin):
 
     list_display = (
         'id', 'email', 'username', 'first_name', 'last_name', 'followers', 'following', 'is_active', 'is_staff',
-        'date_joined', 'last_login')
-    list_filter = ('is_staff', 'is_active')
+        'verified', 'date_joined', 'last_login')
+    list_filter = ('is_staff', 'is_active', 'verified')
     fieldsets = (
         ('Personal Info', {'fields': ('first_name', 'last_name', 'username', 'email', 'password')}),
         ('Profile Data', {'fields': ('followers', 'following', 'prof_image', 'prof_desc')}),
-        ('Permissions', {'fields': ('is_active', 'is_staff')}),
+        ('Permissions', {'fields': ('is_active', 'is_staff', 'verified')}),
         ('Spare Data', {'fields': ('field1', 'field2', 'field3', 'field4', 'field5')}),
     )
     add_fieldsets = (
