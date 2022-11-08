@@ -46,10 +46,10 @@ def get_user_score(main_user, other_user):
     # These two scores are based on current twitter drama thanks to musk.
     # Check if the user is verified
     if other_user.verified:
-        score += 1
+        score += 10
 
     # Check if the user is the big cheese
     if other_user.username == "@admin":
-        score += 10
+        score += 100
 
     return score
