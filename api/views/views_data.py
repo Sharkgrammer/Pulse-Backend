@@ -30,17 +30,28 @@ class PostView(APIView):
         if pid is None and username is None:
             # Get all posts. Run the scoring algo
             amt = int(request.GET.get('amt', 7))
+
             # TODO remove this, it just makes the UX feel more hefty when ran locally
             if amt > 7:
                 wait_random_amount()
 
-            posts = Post.objects.filter(deleted=False).order_by('-created_date')
+            latest = request.GET.get("latest", False) == "true"
 
-            context["score"] = True
-            serializer = PostSerializer(posts, many=True, context=context)
-            sorted_data = sorted(serializer.data, key=lambda u: u['score'], reverse=True)
+            if not latest:
+                posts = Post.objects.filter(deleted=False).order_by('-created_date')
 
-            data = sorted_data[:amt:1]
+                context["score"] = True
+                serializer = PostSerializer(posts, many=True, context=context)
+                sorted_data = sorted(serializer.data, key=lambda u: u['score'], reverse=True)
+
+                data = sorted_data[:amt:1]
+            else:
+                follows = Follow.objects.values("following__username").filter(created_by=user, deleted=False)
+                posts = Post.objects.filter(created_by__username__in=follows, deleted=False).order_by('-created_date')
+
+                serializer = PostSerializer(posts, many=True, context=context)
+
+                data = serializer.data[:amt:1]
 
         elif pid is not None:
             # Get data for a single post

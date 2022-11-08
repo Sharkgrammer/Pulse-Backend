@@ -31,7 +31,9 @@ def get_user_score(main_user, other_user):
     score = similar_follows + similar_interests
     if posted:
         score *= 2
-        score += 1
+
+        if score == 0:
+            score += 1
 
     # Check if the user logged in in the past day
     if other_user.last_login >= get_days_ago(1):
@@ -46,10 +48,10 @@ def get_user_score(main_user, other_user):
     # These two scores are based on current twitter drama thanks to musk.
     # Check if the user is verified
     if other_user.verified:
-        score += 10
+        score += 1
 
     # Check if the user is the big cheese
     if other_user.username == "@admin":
-        score += 100
+        score += 1
 
     return score
