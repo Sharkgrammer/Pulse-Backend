@@ -50,7 +50,7 @@ class UpdateUserForm(forms.ModelForm):
         model = User
         fields = (
             'email', 'password', 'username', 'first_name', 'last_name', 'prof_image', 'prof_desc', 'followers',
-            'following', 'is_active', 'is_staff', 'verified', 'date_joined', 'last_login'
+            'following', 'is_active', 'is_staff', 'verified', 'annoy', 'advertiser', 'date_joined', 'last_login'
         )
 
     def clean_password(self):
@@ -64,12 +64,12 @@ class UserAdmin(BaseUserAdmin):
 
     list_display = (
         'id', 'email', 'username', 'first_name', 'last_name', 'followers', 'following', 'is_active', 'is_staff',
-        'verified', 'date_joined', 'last_login')
-    list_filter = ('is_staff', 'is_active', 'verified')
+        'verified', 'annoy', 'advertiser', 'date_joined', 'last_login')
+    list_filter = ('is_staff', 'is_active', 'verified', 'annoy', 'advertiser')
     fieldsets = (
         ('Personal Info', {'fields': ('first_name', 'last_name', 'username', 'email', 'password')}),
         ('Profile Data', {'fields': ('followers', 'following', 'prof_image', 'prof_desc')}),
-        ('Permissions', {'fields': ('is_active', 'is_staff', 'verified')}),
+        ('Permissions', {'fields': ('is_active', 'is_staff', 'verified', 'annoy', 'advertiser')}),
         ('Spare Data', {'fields': ('field1', 'field2', 'field3', 'field4', 'field5')}),
     )
     add_fieldsets = (
@@ -93,16 +93,16 @@ admin.site.register(User, UserAdmin)
 
 class PostAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'pid', 'created_by', 'content', 'likes', 'comments', 'shares', 'image_post', 'status', 'created_date',
-        'last_edit', 'last_update', 'deleted')
+        'id', 'pid', 'created_by', 'content', 'likes', 'comments', 'shares', 'image_post', 'status', 'advertisement',
+        'created_date', 'last_edit', 'last_update', 'deleted')
     search_fields = ('id', 'created_by', 'content', 'template_id')
     ordering = ('-id',)
-    list_filter = ('image_post', 'status', 'deleted')
+    list_filter = ('image_post', 'status', 'advertisement', 'deleted')
 
     fieldsets = (
         ('Post Data', {'fields': (
             'pid', 'created_by', 'created_date', 'last_edit', 'last_update', 'content', 'likes', 'comments', 'shares',
-            'status', 'image_post', 'image_contents', 'deleted')}),
+            'status', 'advertisement', 'image_post', 'image_contents', 'deleted')}),
         ('Spare Data', {'fields': ('field1', 'field2', 'field3', 'field4', 'field5')}),
     )
 

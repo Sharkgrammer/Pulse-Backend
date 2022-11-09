@@ -45,11 +45,13 @@ class SystemUserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     id = models.BigAutoField(primary_key=True)
-    first_name = models.CharField('first name', max_length=30, blank=True)
-    last_name = models.CharField('last name', max_length=150, blank=True)
+    first_name = models.CharField('First Name', max_length=30, blank=True)
+    last_name = models.CharField('Last Name', max_length=150, blank=True)
     email = models.EmailField(verbose_name='Email', max_length=255, unique=True)
     username = models.CharField(verbose_name='Username', max_length=150, unique=True)
     verified = models.BooleanField(verbose_name="Verified", default=False)
+    annoy = models.BooleanField(verbose_name="Annoy User", default=False)
+    advertiser = models.BooleanField(verbose_name="Advertiser", default=False)
 
     # Profile data
     prof_image = models.ImageField(verbose_name='Profile Image', upload_to='profs', max_length=None, blank=True)
@@ -92,6 +94,7 @@ class Post(models.Model):
     created_date = models.DateTimeField(default=get_today)
     last_edit = models.DateTimeField(default=get_today)
     last_update = models.DateTimeField(default=get_today)
+    advertisement = models.BooleanField(default=False)
 
     content = models.TextField(default="")
     likes = models.IntegerField(default=0)

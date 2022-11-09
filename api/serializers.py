@@ -25,6 +25,7 @@ class PostSerializer(serializers.Serializer):
     profile_username = serializers.CharField(source="created_by.username", read_only=True)
     profile_image = serializers.ImageField(source="created_by.prof_image", read_only=True)
     profile_verified = serializers.BooleanField(source="created_by.verified", read_only=True)
+    advertisement = serializers.BooleanField(default=False)
     liked = SerializerMethodField(method_name='get_liked', read_only=True)
     score = SerializerMethodField(method_name='get_score', read_only=True)
 
@@ -108,6 +109,7 @@ class PostSerializer(serializers.Serializer):
         return round(score, 2)
 
     def create(self, validated_data):
+
         return Post.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
@@ -123,6 +125,9 @@ class PostSerializer(serializers.Serializer):
         instance.image_contents = validated_data.get('image_contents', instance.image_contents)
         instance.last_update = get_today()
 
+        if instance.created_by.advertiser:
+            instance.advertisement = True
+
         instance.save()
         return instance
 
@@ -137,6 +142,8 @@ class UserSerializer(serializers.Serializer):
     prof_image = serializers.ImageField(default="")
     prof_desc = serializers.CharField(default="")
     verified = serializers.BooleanField(default=False)
+    annoy = serializers.BooleanField(default=False)
+    advertiser = serializers.BooleanField(default=False)
     followers = serializers.IntegerField(default=0)
     following = serializers.IntegerField(default=0)
     date_joined = serializers.DateTimeField(required=False)
