@@ -103,12 +103,19 @@ class PostSerializer(serializers.Serializer):
         if post.image_post:
             score += 1
 
+        # Is the post an ad and should the user be annoyed?
+        if user.annoy and post.advertisement:
+            score += 5
+
         # Add user_score to score
         score += user_score * multiplier
 
         return round(score, 2)
 
     def create(self, validated_data):
+
+        if validated_data['created_by'].advertiser:
+            validated_data["advertisement"] = True
 
         return Post.objects.create(**validated_data)
 
@@ -124,9 +131,6 @@ class PostSerializer(serializers.Serializer):
         instance.image_post = validated_data.get('image_post', instance.image_post)
         instance.image_contents = validated_data.get('image_contents', instance.image_contents)
         instance.last_update = get_today()
-
-        if instance.created_by.advertiser:
-            instance.advertisement = True
 
         instance.save()
         return instance
