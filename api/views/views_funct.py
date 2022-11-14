@@ -1,7 +1,10 @@
 import io
+import os
+import random
 from itertools import chain
 
 from django.contrib.auth.hashers import make_password
+from django.contrib.staticfiles.finders import find
 from django.db.models import Q
 from django.http import HttpResponse
 from rest_framework.decorators import action, api_view
@@ -12,6 +15,7 @@ from rest_framework.response import Response
 from api.functions.functions import wait_random_amount
 from api.models import Follow, User, Post, Interest, Interest_User
 from api.serializers import UserSerializer, InterestSerializer, PostSerializer, SuggestedUserSerializer
+from socialshonks import settings
 
 
 @api_view(['GET'])
@@ -209,3 +213,12 @@ def search(request):
     data = chain(user_data, post_serial.data)
 
     return Response(data)
+
+
+@api_view(['GET'])
+@action(detail=False)
+def get_ad(request):
+    file_path = settings.MEDIA_ROOT + "/ads/"
+    files = os.listdir(file_path)
+
+    return HttpResponse("/media/ads/" + random.choice(files))

@@ -51,7 +51,7 @@ def get_user_score(main_user, other_user):
         score += 1
 
     # Check if the user is the big cheese
-    if other_user.username == "@admin":
-        score += 1
+    # if other_user.username == "@admin":
+        # score += 1
 
     return score
