@@ -25,7 +25,8 @@ def get_suggested_users(request):
 
     # Get all users that you don't follow. Exclude yourself
     usernames = Follow.objects.values("following__username").filter(created_by=user, deleted=False)
-    all_users = User.objects.all().exclude(username__in=usernames).exclude(username=user.username)
+    all_users = User.objects.all().exclude(username__in=usernames).exclude(username=user.username).filter(
+        is_active=True)
 
     # Run the suggested user serializer. Calculates a score based on mutual follows/interests
     serializer = SuggestedUserSerializer(all_users, many=True, context={'user': user})
@@ -200,9 +201,10 @@ def search(request):
 
     users = User.objects.all().filter(
         Q(first_name__contains=query) | Q(last_name__contains=query) | Q(username__contains=query),
-        is_active=True).order_by('-id').exclude(username=user.username)[:user_amt:1]
+        is_active=True).order_by('-id').exclude(username=user.username, is_active=True)[:user_amt:1]
 
-    posts = Post.objects.all().filter(Q(content__contains=query), deleted=False).order_by('-id')[:post_amt:1]
+    posts = Post.objects.all().filter(Q(content__contains=query), deleted=False, created_by__is_active=True).order_by(
+        '-id')[:post_amt:1]
 
     # TODO i don't know how bad this will be speed wise
     user_serial = SuggestedUserSerializer(users, many=True, context=context)

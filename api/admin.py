@@ -7,6 +7,16 @@ from .models import User, Post, Follow, Like, Comment, Interest, Interest_User
 
 
 # USER ADMIN
+@admin.action(description='Set Inactive')
+def set_inactive(self, request, queryset):
+    queryset.update(is_active=False)
+
+
+@admin.action(description='Set Active')
+def set_active(self, request, queryset):
+    queryset.update(is_active=True)
+
+
 class AddUserForm(forms.ModelForm):
     password1 = forms.CharField(
         label='Password', widget=forms.PasswordInput
@@ -86,7 +96,7 @@ class UserAdmin(BaseUserAdmin):
     )
     search_fields = ('id', 'username', 'email', 'first_name', 'last_name')
     ordering = ('-id', 'username', 'email', 'first_name', 'last_name', 'date_joined', 'last_login')
-
+    actions = [set_inactive, set_active]
 
 admin.site.register(User, UserAdmin)
 

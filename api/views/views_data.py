@@ -38,7 +38,7 @@ class PostView(APIView):
             latest = request.GET.get("latest", False) == "true"
 
             if not latest:
-                posts = Post.objects.filter(deleted=False).order_by('-created_date')
+                posts = Post.objects.filter(deleted=False, created_by__is_active=True).order_by('-created_date')
 
                 context["score"] = True
                 serializer = PostSerializer(posts, many=True, context=context)
@@ -46,8 +46,9 @@ class PostView(APIView):
 
                 data = sorted_data[:amt:1]
             else:
-                follows = Follow.objects.values("following__username").filter(created_by=user, deleted=False)
-                posts = Post.objects.filter(created_by__username__in=follows, deleted=False).order_by('-created_date')
+                follows = Follow.objects.values("following__username").filter(created_by=user, deleted=False, )
+                posts = Post.objects.filter(created_by__username__in=follows, deleted=False,
+                                            created_by__is_active=True).order_by('-created_date')
 
                 serializer = PostSerializer(posts, many=True, context=context)
 
@@ -55,13 +56,14 @@ class PostView(APIView):
 
         elif pid is not None:
             # Get data for a single post
-            post = Post.objects.get(pid=pid, deleted=False)
+            post = Post.objects.get(pid=pid, deleted=False, created_by__is_active=True)
             serializer = PostSerializer(post, many=False, context=context)
             data = serializer.data
 
         elif username is not None:
             # Get all data for a single user
-            post = Post.objects.filter(created_by__username=username, deleted=False).order_by('-created_date')
+            post = Post.objects.filter(created_by__username=username, deleted=False,
+                                       created_by__is_active=True).order_by('-created_date')
             serializer = PostSerializer(post, many=True, context=context)
             data = serializer.data
 
@@ -253,9 +255,11 @@ class FollowView(APIView):
 
             # The follow data itself is rather useless for the front end. Get a list of users now
             if get_followers:
-                data = data.filter(following__username=username, deleted=False).values("created_by__username")
+                data = data.filter(following__username=username, deleted=False, created_by__is_active=True).values(
+                    "created_by__username")
             else:
-                data = data.filter(created_by__username=username, deleted=False).values("following__username")
+                data = data.filter(created_by__username=username, deleted=False, created_by__is_active=True).values(
+                    "following__username")
 
             all_users = User.objects.filter(username__in=data)
 
@@ -400,7 +404,7 @@ class CommentView(APIView):
             if amt > 7:
                 wait_random_amount()
 
-            comments = Comment.objects.filter(post__pid=pid).order_by('-id')[:amt:1]
+            comments = Comment.objects.filter(post__pid=pid, created_by__is_active=True).order_by('-id')[:amt:1]
             serializer = CommentSerializer(comments, many=True, context=context)
 
             return Response(serializer.data)
