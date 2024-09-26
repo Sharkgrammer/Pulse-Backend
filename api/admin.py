@@ -86,7 +86,6 @@ class UserAdmin(BaseUserAdmin):
         (
             None,
             {
-                'classes': ('wide',),
                 'fields': (
                     'email', 'first_name', 'last_name', 'username', 'prof_desc', 'password1',
                     'password2'
@@ -97,6 +96,7 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ('id', 'username', 'email', 'first_name', 'last_name')
     ordering = ('-id', 'username', 'email', 'first_name', 'last_name', 'date_joined', 'last_login')
     actions = [set_inactive, set_active]
+
 
 admin.site.register(User, UserAdmin)
 

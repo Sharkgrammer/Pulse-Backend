@@ -140,25 +140,25 @@ class UserView(APIView):
             user.last_login = get_today()
             user.save()
 
-        uid = request.GET.get("username", None)
-        if uid is None:
-            uid = user.username
+        username = request.GET.get("username", None)
+        if username is None:
+            username = user.username
 
         email = request.GET.get("email", None)
 
-        if uid is None and email is None:
+        if username is None and email is None:
             return HttpResponse("False")
 
         # TODO if i implement block/privacy features, they would go here and in the post algo
         user_data = None
 
         if email is None:
-            user_data = User.objects.get(username=uid)
+            user_data = User.objects.get(username=username)
         else:
             user_data = User.objects.get(email=email)
 
         context = {}
-        if user.username != uid:
+        if user.username != username:
             context = {
                 'exclude_fields': [
                     'email',
