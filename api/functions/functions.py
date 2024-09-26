@@ -71,8 +71,10 @@ def update_likes(model, add):
 
 
 def wait_random_amount():
-    randTime = random.uniform(0.2, 1)
-    print("Waiting {} seconds...".format(randTime))
+    # Since its hosted i don't need this
+    return
+    #randTime = random.uniform(0.2, 1)
+    #print("Waiting {} seconds...".format(randTime))
 
-    time.sleep(randTime)
+    #time.sleep(randTime)
 
