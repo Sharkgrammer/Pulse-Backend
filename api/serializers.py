@@ -52,11 +52,8 @@ class PostSerializer(serializers.Serializer):
             if user_score == 0:
                 return 0
 
-        # If the post is over 10 days old, we don't really care about its order, order based on user slightly
-        if post.created_date <= get_days_ago(10):
-            return user_score * 0.1
-
         score = 0
+
         multiplier = 0.1
         # See if the users follows made posts
         user_follows = Follow.objects.values_list("following__username", flat=True).filter(created_by=user,
@@ -109,6 +106,10 @@ class PostSerializer(serializers.Serializer):
 
         # Add user_score to score
         score += user_score * multiplier
+
+        # If the post is over two weeks, add a penalty
+        if post.created_date <= get_days_ago(14):
+            score = score - 5 if score > 5 else 0
 
         return round(score, 2)
 
